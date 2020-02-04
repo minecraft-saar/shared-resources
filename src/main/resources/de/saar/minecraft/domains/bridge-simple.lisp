@@ -1,0 +1,363 @@
+(defdomain house (
+ 
+;;Operators, correspond to actions in PDDL
+ (:operator (!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
+        ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
+        ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
+        ((block-at ?block-type ?x ?y ?z) (last-placed ?x ?y ?z))
+        2
+ )
+
+ (:operator (!mine ?block-type ?x ?y ?z)
+        ((block-at ?block-type ?x ?y ?z))
+        ((block-at ?block-type ?x ?y ?z))
+        ((clear ?x ?y ?z))
+ )
+
+;; Methods can be decomposed into other methods or operators
+;; Operators are marked with ! methods are just given by name 
+(:method (remove-block ?x ?y ?z)
+    block-is-empty
+    ((clear ?x ?y ?z))
+    ()
+
+    block-is-filled
+    ((block-at ?a ?x ?y ?z))
+    ((!remove-block ?a ?x ?y ?z))
+    )
+
+(:method (place-block ?block-type ?x ?y ?z)
+    block-is-empty
+        ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
+        ((!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2))
+
+    block-is-same
+        ((block-at ?block-type ?x ?y ?z))
+        ()
+
+;;removes previous block in this space
+    block-is-different
+        ((block-at ?a ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
+        (
+            (!mine ?a ?x ?y ?z)
+            (!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
+        )
+
+)
+
+
+;;directions are given as numbers with:
+;; eastequal1, westequal2, northequal3, southequal4
+(:method (build-row ?x ?y ?z ?length ?dir)
+        length-one
+        ((call equal ?length 1))
+        ((place-block stone ?x ?y ?z))
+
+        east
+        ((call equal ?dir 1) (not (call equal ?length 1) ))
+        ( 
+            (place-block stone ?x ?y ?z)
+            (build-row (call + ?x 1) ?y ?z (call - ?length 1) ?dir)
+        )
+
+        west
+        ((call equal ?dir 2) (not (call equal ?length 1) ))
+        ( 
+            (place-block stone ?x ?y ?z)
+            (build-row (call - ?x 1) ?y ?z (call - ?length 1) ?dir)
+        )
+
+        north
+        ((call equal ?dir 3) (not (call equal ?length 1) ))
+        ( 
+            (place-block stone ?x ?y ?z)
+            (build-row ?x ?y (call - ?z 1) (call - ?length 1) ?dir)
+        )
+
+        south
+        ((call equal ?dir 4) (not (call equal ?length 1) ))
+        ( 
+            (place-block stone ?x ?y ?z)
+            (build-row ?x ?y (call + ?z 1) (call - ?length 1) ?dir)
+        )
+)
+
+
+;; All directions have two methods, the first starting at the given position,
+;;the second starting at the other end of the railing going in the opposite direction
+(:method (build-railing-east ?x ?y ?z ?length ?height ?dir)
+        height-one
+        ((call equal ?height 1) (call equal ?dir 1))
+        ((build-row ?x ?y ?z ? length ?dir))
+
+        east-one
+        ((call equal ?dir 1) (not (call equal ?height 1)))
+        ( 
+            (build-row ?x ?y ?z ?length ?dir)
+            (build-railing-east ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+        )
+)
+
+(:method (build-railing-east ?x ?y ?z ?length ?height ?dir)
+        height-one
+        ((call equal ?height 1) (call equal ?dir 1))
+        ((build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2))
+            
+
+        east-two
+        ((call equal ?dir 1) (not (call equal ?height 1)))
+        ( 
+            (build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2)
+            (build-railing-east ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+        )
+)
+
+
+(:method (build-railing-west ?x ?y ?z ?length ?height ?dir)
+        height-one
+        ((call equal ?height 1) (call equal ?dir 2))
+        ((build-row ?x ?y ?z ?length ?dir))
+
+        west-one
+        ((call equal ?dir 2) (not (call equal ?height 1)))
+        ( 
+            (build-row ?x ?y ?z ?length ?dir)
+            (build-railing-west ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+        )
+)
+
+(:method (build-railing-west ?x ?y ?z ?length ?height ?dir)
+        height-one
+        ((call equal ?height 1) (call equal ?dir 2))
+        ((build-row (call + (call - ?x ?length) 1) ?y ?z ?length 1))
+
+        west-two
+        ((call equal ?dir 2) (not (call equal ?height 1)))
+        ( 
+            (build-row (call + (call - ?x ?length) 1) ?y ?z ?length 1)
+            (build-railing-west ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+        )
+)
+
+(:method (build-railing-north ?x ?y ?z ?length ?height ?dir)
+        height-one
+        ((call equal ?height 1) (call equal ?dir 3))
+        (
+            (build-row ?x ?y ?z ?length ?dir))
+
+        north-one
+        ((call equal ?dir 3) (not (call equal ?height 1)))
+        (   
+            (build-row ?x ?y ?z ?length ?dir)
+            (build-railing-north ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+        )
+)
+
+(:method (build-railing-north ?x ?y ?z ?length ?height ?dir)
+        height-one
+        ((call equal ?height 1) (call equal ?dir 3))
+        ((build-row ?x ?y (call + (call - ?z ?length) 1) ?length 4))
+
+        north-two
+        ((call equal ?dir 3) (not (call equal ?height 1)))
+        ( 
+            (build-row ?x ?y (call + (call - ?z ?length) 1) ?length 4)
+            (build-railing-north ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+        )
+)
+
+(:method (build-railing-south ?x ?y ?z ?length ?height ?dir)
+        height
+        ((call equal ?height 1) (call equal ?dir 4))
+        ((build-row ?x ?y ?z ?length ?dir))
+
+        south-one
+        ((call equal ?dir 4) (not (call equal ?height 1)))
+        ( 
+            (build-row ?x ?y ?z ?length ?dir)
+            (build-railing-south ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+        )
+
+)
+
+(:method (build-railing-south ?x ?y ?z ?length ?height ?dir)
+        height-one
+        ((call equal ?height 1) (call equal ?dir 4))
+        ((build-row ?x ?y (call + (call - ?z ?length) 1) ?length 3))
+
+        south-two
+        ((call equal ?dir 4) (not (call equal ?height 1)))
+        (   
+            (build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3)
+            (build-railing-south ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+        )
+)
+
+
+(:method (build-railing ?x ?y ?z ?length ?height ?dir)
+        zero-height
+        ((call equal ?height 0))
+        ()
+
+        east
+        ((call equal ?dir 1))
+        ((build-railing-east ?x ?y ?z ?length ?height ?dir))
+
+        west
+        ((call equal ?dir 2))
+        ((build-railing-west ?x ?y ?z ?length ?height ?dir))
+
+        north
+        ((call equal ?dir 3))
+        ((build-railing-north ?x ?y ?z ?length ?height ?dir))
+
+        south
+        ((call equal ?dir 4))
+        ((build-railing-south ?x ?y ?z ?length ?height ?dir))
+)
+
+(:method (build-floor-east ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 1))
+        ((build-row ?x ?y ?z ?length 4))
+
+        east-one
+        ((call equal ?dir 1) (not (call equal ?width 1)))
+        ( 
+            (build-row ?x ?y ?z ?length 4)
+            (build-floor-east (call + ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+        )
+)
+
+(:method (build-floor-east ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 1))
+        ((build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3))
+
+        east-two
+        ((call equal ?dir 1) (not (call equal ?width 1)))
+        ( 
+            (build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3)
+            (build-floor-east (call + ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+        )
+)
+
+(:method (build-floor-west ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 2))
+        ((build-row ?x ?y ?z ?length 4))
+
+        west-one
+        ((call equal ?dir 2) (not (call equal ?width 1)))
+        ( 
+            (build-row ?x ?y ?z ?length 4)
+            (build-floor-west (call - ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+        )
+)
+
+(:method (build-floor-west ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 2))
+        ((build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3))
+
+        west-two
+        ((call equal ?dir 2) (not (call equal ?width 1)))
+        ( 
+            (build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3)
+            (build-floor-west (call - ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+        )
+)
+
+(:method (build-floor-north ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 3))
+        ((build-row ?x ?y ?z ?length 1))
+
+        north-one
+        ((call equal ?dir 3) (not (call equal ?width 1)))
+        ( 
+            (build-row ?x ?y ?z ?length 1)
+            (build-floor-north ?x ?y (call - ?z 1) ?length (call - ?width 1) ?dir)
+        )
+
+)
+
+(:method (build-floor-north ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 3))
+        ((build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2))
+
+        north-two
+        ((call equal ?dir 3) (not (call equal ?width 1)))
+        ( 
+            (build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2)
+            (build-floor-north ?x ?y (call - ?z 1) ?length (call - ?width 1) ?dir)
+        )
+)
+
+(:method (build-floor-south ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 4))
+        ((build-row ?x ?y ?z ?length 1))
+
+        south-one
+        ((call equal ?dir 4) (not (call equal ?width 1)))
+        ( 
+            (build-row ?x ?y ?z ?length 1)
+            (build-floor-south ?x ?y (call + ?z 1) ?length (call - ?width 1) ?dir)
+        )
+)
+
+(:method (build-floor-south ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 4))
+        ((build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2))
+
+        south-two
+        ((call equal ?dir 4) (not (call equal ?width 1)))
+        (
+            (build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2)
+            (build-floor-south ?x ?y (call + ?z 1) ?length (call - ?width 1) ?dir)
+        )
+)
+
+
+(:method (build-floor ?x ?y ?z ?length ?width ?dir)
+        zero-height
+        ((call equal ?width 0))
+        ()
+
+        east
+        ((call equal ?dir 1))
+        ((build-floor-east ?x ?y ?z ?length ?width ?dir))
+
+        west
+        ((call equal ?dir 2))
+        ((build-floor-west ?x ?y ?z ?length ?width ?dir))
+
+        north
+        ((call equal ?dir 3))
+        ((build-floor-north ?x ?y ?z ?length ?width ?dir))
+
+        south
+        ((call equal ?dir 4))
+        ((build-floor-south ?x ?y ?z ?length ?width ?dir))
+)
+
+(:method (build-bridge ?x ?y ?z ?width ?length ?height)
+        ()
+        (
+            (build-floor ?x ?y ?z ?length ?width 3)
+            (build-railing ?x (call + ?y 1) ?z ?length ?height 3)
+            (build-railing (call - (call + ?x ?width ) 1) (call + ?y 1) (call - (call + ?z ?length ) 1) ?length ?height 4)
+        )
+)   
+
+;;Axioms
+(:- (clear ?x ?y ?z)
+    ((not (block-at ?type ?x ?y ?z)))
+    )
+
+)
+)
+
