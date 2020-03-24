@@ -63,8 +63,8 @@
     block-is-different
         ((block-at ?a ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
         (
-            (!mine ?a ?x ?y ?z)
-            (!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
+            ;;(!mine ?a ?x ?y ?z)
+            ;;(!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
         )
 
 )

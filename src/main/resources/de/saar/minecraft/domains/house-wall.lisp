@@ -91,8 +91,8 @@
     block-is-different
         ((block-at ?a ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
         (
-            (!remove-block ?a ?x ?y ?z)
-            (!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
+            ;;(!remove-block ?a ?x ?y ?z)
+            ;;(!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
         )
 
 )
@@ -110,8 +110,8 @@
     block-is-different
         ((block-at ?a ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
         (
-            (!remove-block-hidden ?a ?x ?y ?z)
-            (!place-block-hidden ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
+            ;;(!remove-block-hidden ?a ?x ?y ?z)
+            ;;(!place-block-hidden ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
         )
 
 )
