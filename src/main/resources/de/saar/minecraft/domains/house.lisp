@@ -46,7 +46,7 @@
 (:operator (!build-wall ?x ?y ?z ?length ?height ?dir)
         ()
         ()
-        ((row-at ?x ?y ?z ?length ?dir))
+        ((wall-at ?x ?y ?z ?length ?dir))
         10.0
 
     )
