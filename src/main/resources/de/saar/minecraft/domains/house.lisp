@@ -48,7 +48,20 @@
         ()
         ((wall-at ?x ?y ?z ?length ?dir))
         10.0
+    )
 
+(:operator (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
+        ()
+        ()
+        ()
+        0.0
+    )
+
+(:operator (!build-wall-finished ?x ?y ?z ?length ?height ?dir)
+        ()
+        ()
+        ((wall-at ?x ?y ?z ?length ?dir))
+        0.0
     )
 
 ;; Methods can be decomposed into other methods or operators
@@ -322,19 +335,31 @@
 
         east
         ((call equal ?dir 1))
-        ((build-wall-east ?x ?y ?z ?length ?height ?dir))
+        (
+            (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
+            (build-wall-east ?x ?y ?z ?length ?height ?dir)
+            (!build-wall-finished ?x ?y ?z ?length ?height ?dir))
 
         west
         ((call equal ?dir 2))
-        ((build-wall-west ?x ?y ?z ?length ?height ?dir))
+        (
+            (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
+            (build-wall-west ?x ?y ?z ?length ?height ?dir)
+            (!build-wall-finished ?x ?y ?z ?length ?height ?dir))
 
         north
         ((call equal ?dir 3))
-        ((build-wall-north ?x ?y ?z ?length ?height ?dir))
+        (
+            (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
+            (build-wall-north ?x ?y ?z ?length ?height ?dir)
+            (!build-wall-finished ?x ?y ?z ?length ?height ?dir))
 
         south
         ((call equal ?dir 4))
-        ((build-wall-south ?x ?y ?z ?length ?height ?dir))
+        (
+            (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
+            (build-wall-south ?x ?y ?z ?length ?height ?dir)
+            (!build-wall-finished ?x ?y ?z ?length ?height ?dir))
 
 )
 
