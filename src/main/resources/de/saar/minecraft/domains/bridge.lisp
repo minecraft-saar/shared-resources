@@ -53,7 +53,7 @@
         ()
         ()
         ((floor-at ?x ?y ?z ?length ?width ?dir))
-        0.0
+        10.0
     )
 ;; Methods can be decomposed into other methods or operators
 ;; Operators are marked with ! methods are just given by name 
@@ -392,8 +392,8 @@
         ()
         (
             (build-floor ?x ?y ?z ?length ?width 4)
-            (build-railing ?x (call + ?y 1) ?z ?length 4)
-            (build-railing (call - (call + ?x ?width ) 1) (call + ?y 1) (call - (call + ?z ?length ) 1) ?length  3)
+            (build-railing ?x (call + ?y 1) ?z ?length 1)
+            (build-railing (call - (call + ?x ?length ) 1) (call + ?y 1) (call - (call + ?z ?width ) 1) ?length  2)
         )
 )   
 
