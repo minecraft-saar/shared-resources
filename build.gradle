@@ -11,6 +11,7 @@ description 'shared-resources'
 // This defines releases as revisions
 // that have a tag of the form "release-X.Y.Z"
 scmVersion {
+    ignoreUncommittedChanges = false
     tag {
         prefix = 'release'
     }
