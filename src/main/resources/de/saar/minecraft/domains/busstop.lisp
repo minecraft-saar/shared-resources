@@ -1,4 +1,6 @@
-(defdomain house (
+(defdomain busstop (
+;;new or adjusted as comment over new or adjusted methods/operators, otherwise it is just copied from house.lisp
+;;costs of operators choosen equal to similiar methods 
  
 ;;Operators, correspond to actions in PDDL
  (:operator (!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
@@ -27,14 +29,6 @@
         ((clear ?x ?y ?z))
         0
  )
-;;has to be called in correct context, see precondiction in place-block block-is-adjacent
-;;Action has only cost of 0.5 instead of 1
-;(:operator (!place-adjacent ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
-;        ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))  
-;        ((last-placed ?x2 ?y2 ?z2) (clear ?x ?y ?z))
-;        ((last-placed ?x ?y ?z) (block-at ?block-type ?x ?y ?z))
-;        0.1
-;    )
 
 (:operator (!build-row ?x ?y ?z ?length ?dir)
         ()
@@ -76,59 +70,33 @@
     ((!remove-block ?a ?x ?y ?z))
     )
 
-;(:method (place-block ?block-type ?x ?y ?z)
-;    block-is-adjacent-x
-;    	((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2) (call equal ?y ?y2) (call equal ?z ?z2) (not (list (not (call equal (call - ?x 1.0) ?x2))  (not (call equal (call + ?x 1.0) ?x2)) )) )
-;    	((!place-adjacent ?block-type ?x ?y ?z ?x2 ?y2 ?z2))
-
-;    block-is-adjacent-y
-;    	((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2) (call equal ?x ?x2) (call equal ?z ?z2) (not (list (not (call equal (call - ?y 1.0) ?y2))  (not (call equal (call + ?y 1.0) ?y2)) )) )
-;    	((!place-adjacent ?block-type ?x ?y ?z ?x2 ?y2 ?z2))
-
-;    block-is-adjacent-z
-;    	((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2) (call equal ?x ?x2) (call equal ?y ?y2) (not (list (not (call equal (call - ?z 1.0) ?z2))  (not (call equal (call + ?z 1.0) ?z2)) )) )
-;    	((!place-adjacent ?block-type ?x ?y ?z ?x2 ?y2 ?z2))
-
-;)
-
 (:method (place-block ?block-type ?x ?y ?z)
-    
-    block-is-same
-        ((block-at ?block-type ?x ?y ?z))
-        ()
-
-;;removes previous block in this space
-    block-is-different
-        ((block-at ?a ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
-        (
-            ;;(!remove-block ?a ?x ?y ?z)
-            ;;(!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
-        )
-
     block-is-empty
         ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
         ((!place-block ?block-type ?x ?y ?z ?x2 ?y2 ?z2))
 
-
-)
-
-(:method (place-block-hidden ?block-type ?x ?y ?z)
     block-is-same
         ((block-at ?block-type ?x ?y ?z))
         ()
 
-;;removes previous block in this space
     block-is-different
         ((block-at ?a ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
-        (
-            ;;(!remove-block-hidden ?a ?x ?y ?z)
-            ;;(!place-block-hidden ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
-        )
+        ()
 
-        block-is-empty
+)
+
+(:method (place-block-hidden ?block-type ?x ?y ?z)
+    block-is-empty
         ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
         ((!place-block-hidden ?block-type ?x ?y ?z ?x2 ?y2 ?z2))
 
+    block-is-same
+        ((block-at ?block-type ?x ?y ?z))
+        ()
+
+    block-is-different
+        ((block-at ?a ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
+        ()
 
 )
 
@@ -219,7 +187,6 @@
             (build-row-hidden ?x ?y (call + ?z 1) (call - ?length 1) ?dir)
         )
 )
-
 
 
 ;; All directions have two methods, the first starting at the given position,
@@ -504,113 +471,121 @@
 
 )
 
-(:method (build-roof-east ?x ?y ?z ?length ?width ?dir)
+;;adjusted
+(:method (build-roof-east ?x ?y ?z ?length ?width)
         width-one
-        ((call equal ?width 1) (call equal ?dir 1))
-        ((build-row ?x ?y ?z ? length 4))
+        ((call equal ?width 1))
+        ((build-row ?x ?y ?z ?length 1))
 
         east-one
-        ((call equal ?dir 1) (not (call equal ?width 1)))
+        ((not (call equal ?width 1)))
         ( 
-            (build-row ?x ?y ?z ?length 4)
-            (build-roof-east (call + ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+            (build-row ?x ?y ?z ?length 1)
+            (build-roof-east ?x ?y (call + ?z 1) ?length (call - ?width 1))
         )
 )
 
-(:method (build-roof-east ?x ?y ?z ?length ?width ?dir)
+;;adjusted
+(:method (build-roof-east ?x ?y ?z ?length ?width)
         width-one
-        ((call equal ?width 1) (call equal ?dir 1))
-        ((build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3))
+        ((call equal ?width 1))
+        ((build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2))
 
         east-two
-        ((call equal ?dir 1) (not (call equal ?width 1)))
+        ((not (call equal ?width 1)))
         ( 
-            (build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3)
-            (build-roof-east (call + ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+            (build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2)
+            (build-roof-east ?x ?y (call + ?z 1) ?length (call - ?width 1))
         )
 )
 
-(:method (build-roof-west ?x ?y ?z ?length ?width ?dir)
+;;adjusted
+(:method (build-roof-west ?x ?y ?z ?length ?width)
         width-one
-        ((call equal ?width 1) (call equal ?dir 2))
-        ((build-row ?x ?y ?z ?length 4))
+        ((call equal ?width 1))
+        ((build-row ?x ?y ?z ?length 2))
 
         west-one
-        ((call equal ?dir 2) (not (call equal ?width 1)))
+        ((not (call equal ?width 1)))
         ( 
-            (build-row ?x ?y ?z ?length 4)
-            (build-roof-west (call - ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+            (build-row ?x ?y ?z ?length 2)
+            (build-roof-west ?x ?y (call - ?z 1) ?length (call - ?width 1))
         )
 )
 
-(:method (build-roof-west ?x ?y ?z ?length ?width ?dir)
+;;adjusted
+(:method (build-roof-west ?x ?y ?z ?length ?width)
         width-one
-        ((call equal ?width 1) (call equal ?dir 2))
-        ((build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3))
+        ((call equal ?width 1))
+        ((build-row (call + (call - ?x ?length) 1) ?y ?z ?length 1))
 
         west-two
-        ((call equal ?dir 2) (not (call equal ?width 1)))
+        ((not (call equal ?width 1)))
         ( 
-            (build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3)
-            (build-roof-west (call - ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+            (build-row (call + (call - ?x ?length) 1) ?y ?z ?length 1)
+            (build-roof-west ?x ?y (call - ?z 1) ?length (call - ?width 1))
         )
 )
 
-(:method (build-roof-north ?x ?y ?z ?length ?width ?dir)
+;;adjusted
+(:method (build-roof-north ?x ?y ?z ?length ?width)
         width-one
-        ((call equal ?width 1) (call equal ?dir 3))
-        ((build-row ?x ?y ?z ?length 1))
+        ((call equal ?width 1))
+        ((build-row ?x ?y ?z ?length 3))
 
         north-one
-        ((call equal ?dir 3) (not (call equal ?width 1)))
+        ((not (call equal ?width 1)))
         ( 
-            (build-row ?x ?y ?z ?length 1)
-            (build-roof-north ?x ?y (call - ?z 1) ?length (call - ?width 1) ?dir)
+            (build-row ?x ?y ?z ?length 3)
+            (build-roof-north (call + ?x 1) ?y ?z ?length (call - ?width 1))
         )
 
 )
 
-(:method (build-roof-north ?x ?y ?z ?length ?width ?dir)
+;;adjusted
+(:method (build-roof-north ?x ?y ?z ?length ?width)
         width-one
-        ((call equal ?width 1) (call equal ?dir 3))
-        ((build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2))
+        ((call equal ?width 1))
+        ((build-row (call - (call + ?x ?length) 1) ?y ?z ?length 4))
 
         north-two
-        ((call equal ?dir 3) (not (call equal ?width 1)))
+        ((not (call equal ?width 1)))
         ( 
-            (build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2)
-            (build-roof-north ?x ?y (call - ?z 1) ?length (call - ?width 1) ?dir)
+            (build-row ?x ?y (call + (call - ?z ?length) 1) ?length 4)
+            (build-roof-north (call + ?x 1) ?y ?z ?length (call - ?width 1))
         )
 )
 
-(:method (build-roof-south ?x ?y ?z ?length ?width ?dir)
+;;adjusted
+(:method (build-roof-south ?x ?y ?z ?length ?width)
         width-one
-        ((call equal ?width 1) (call equal ?dir 4))
-        ((build-row ?x ?y ?z ?length 1))
+        ((call equal ?width 1))
+        ((build-row ?x ?y ?z ?length 4))
 
         south-one
-        ((call equal ?dir 4) (not (call equal ?width 1)))
+        ((not (call equal ?width 1)))
         ( 
-            (build-row ?x ?y ?z ?length 1)
-            (build-roof-south ?x ?y (call + ?z 1) ?length (call - ?width 1) ?dir)
+            (build-row ?x ?y ?z ?length 4)
+            (build-roof-south (call - ?x 1) ?y ?z ?length (call - ?width 1))
         )
 
 )
 
-(:method (build-roof-south ?x ?y ?z ?length ?width ?dir)
+;;adjusted
+(:method (build-roof-south ?x ?y ?z ?length ?width)
         width-one
-        ((call equal ?width 1) (call equal ?dir 4))
-        ((build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2))
+        ((call equal ?width 1))
+        ((build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3))
 
         south-two
-        ((call equal ?dir 4) (not (call equal ?width 1)))
+        ((not (call equal ?width 1)))
         ( 
-            (build-row (call - (call + ?x ?length) 1) ?y ?z ?length 2)
-            (build-roof-south ?x ?y (call + ?z 1) ?length (call - ?width 1) ?dir)
+            (build-row ?x ?y (call - (call + ?z ?length) 1) ?length 3)
+            (build-roof-south (call - ?x 1) ?y ?z ?length (call - ?width 1))
         )
 )
 
-
+;;adjusted
 (:method (build-roof ?x ?y ?z ?length ?width ?dir)
         zero-height
         ((call equal ?width 0))
@@ -618,37 +593,87 @@
 
         east
         ((call equal ?dir 1))
-        ((build-roof-east ?x ?y ?z ?length ?width ?dir))
+        ((build-roof-east ?x ?y ?z ?length ?width))
 
         west
         ((call equal ?dir 2))
-        ((build-roof-west ?x ?y ?z ?length ?width ?dir))
+        ((build-roof-west ?x ?y ?z ?length ?width))
 
         north
         ((call equal ?dir 3))
-        ((build-roof-north ?x ?y ?z ?length ?width ?dir))
+        ((build-roof-north ?x ?y ?z ?length ?width))
 
         south
         ((call equal ?dir 4))
-        ((build-roof-south ?x ?y ?z ?length ?width ?dir))
+        ((build-roof-south ?x ?y ?z ?length ?width))
 )
 
-(:method (build-door ?x ?y ?z)
-    ()
-    (
-        (remove-block ?x ?y ?z)
-        (remove-block ?x (call + ?y 1) ?z)
-    )
-)
-
-(:method (build-house ?x ?y ?z ?width ?length ?height)
-        ()
+;;adjusted
+;;?dir: parameter to indicate on which side of the busstop is the opening and there the roof is also two blocks longer than the rest of the roof
+;;longer wall is parameter ?width, smaller wall is parameter ?length
+(:method (build-busstop ?x ?y ?z ?width ?length ?height ?dir)
+        east
+        ((call equal ?dir 1))
         (
-            (build-wall ?x ?y ?z ?width ?height 1)
-            (build-wall (call - (call + ?x ?width ) 1) ?y ?z ?length ?height 4)
-            (build-wall (call - (call + ?x ?width) 1) ?y (call - (call + ?z ?length) 1) ?width ?height 2)
+            ;;build wall direction east
+            (build-wall ?x ?y ?z ?length ?height 1)
+            
+            ;;build wall direction west
+            (build-wall (call - (call + ?x ?length) 1) ?y (call - (call + ?z ?width) 1) ?length ?height 2)
+            
+            ;;build wall direction north
+            (build-wall ?x ?y (call - (call + ?z ?width) 1) ?width ?height 3)
+            
+            ;;build roof beginning on wall direction north
+            (build-roof ?x (call + ?y ?height) (call - (call + ?z ?width) 1) ?width (call + ?length 2) 3)
+        )
+        
+        west
+        ((call equal ?dir 2))
+        (
+            ;;build wall direction east
+            (build-wall ?x ?y ?z ?length ?height 1)
+            
+            ;;build wall direction west
+            (build-wall (call - (call + ?x ?length) 1) ?y (call - (call + ?z ?width) 1) ?length ?height 2)
+        
+            ;;build wall direction south
+            (build-wall (call - (call + ?x ?length ) 1) ?y ?z ?width ?height 4)
+            
+            ;;build roof beginning on wall direction south
+            (build-roof (call - (call + ?x ?length ) 1) (call + ?y ?height) ?z ?width (call + ?length 2) 4)
+        )
+        
+        north
+        ((call equal ?dir 3))
+        (
+            ;;build wall direction north
             (build-wall ?x ?y (call - (call + ?z ?length) 1) ?length ?height 3)
-            (build-roof ?x (call + ?y ?height) ?z ?length ?width 1)
+            
+            ;;build wall direction south
+            (build-wall (call - (call + ?x ?width ) 1) ?y ?z ?length ?height 4)
+            
+            ;;build wall direction west
+            (build-wall (call - (call + ?x ?width) 1) ?y (call - (call + ?z ?length) 1) ?width ?height 2)
+            
+            ;;building roof beginning on wall direction west           
+            (build-roof (call - (call + ?x ?width) 1) (call + ?y ?height) (call - (call + ?z ?length) 1) ?width (call + ?length 2) 2)
+        )
+        
+        south
+        ((call equal ?dir 4))
+        (
+            ;;build wall direction north
+            (build-wall ?x ?y (call - (call + ?z ?length) 1) ?length ?height 3)
+            
+            ;;build wall direction south
+            (build-wall (call - (call + ?x ?width ) 1) ?y ?z ?length ?height 4)
+            
+            ;;build wall direction east
+            (build-wall ?x ?y ?z ?width ?height 1)
+            
+            ;;building roof beginning on wall direction east
+            (build-roof ?x (call + ?y ?height) ?z ?width (call + ?length 2) 1)
         )
 )   
 
@@ -659,4 +684,3 @@
 
 )
 )
-
