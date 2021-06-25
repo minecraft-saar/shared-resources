@@ -8,10 +8,24 @@
         2
  )
 
- (:operator (!mine ?block-type ?x ?y ?z)
+ (:operator (!remove ?block-type ?x ?y ?z)
         ((block-at ?block-type ?x ?y ?z))
         ((block-at ?block-type ?x ?y ?z))
         ((clear ?x ?y ?z))
+ )
+
+ (:operator (!place-block-hidden ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
+        ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
+        ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
+        ((block-at ?block-type ?x ?y ?z) (last-placed 100 100 100))
+        0
+ )
+
+ (:operator (!remove-block-hidden ?block-type ?x ?y ?z)
+        ((block-at ?block-type ?x ?y ?z))
+        ((block-at ?block-type ?x ?y ?z))
+        ((clear ?x ?y ?z))
+        0
  )
 
 (:operator (!build-railing ?x ?y ?z ?length ?dir)
@@ -83,10 +97,50 @@
 
 )
 
+(:method (place-block-hidden ?block-type ?x ?y ?z)
+    block-is-same
+        ((block-at ?block-type ?x ?y ?z))
+        ()
+
+;;removes previous block in this space
+    block-is-different
+        ((block-at ?a ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
+        (
+            ;;(!remove-block-hidden ?a ?x ?y ?z)
+            ;;(!place-block-hidden ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
+        )
+
+        block-is-empty
+        ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
+        ((!place-block-hidden ?block-type ?x ?y ?z ?x2 ?y2 ?z2))
+
+
+)
+
 
 ;;directions are given as numbers with:
 ;; eastequal1, westequal2, northequal3, southequal4
 (:method (build-row ?x ?y ?z ?length ?dir)
+    build-directly
+    ((last-placed ?x2 ?y2 ?z2 ))
+    (
+        (!build-row ?x ?y ?z ?length ?dir)
+        (build-row-hidden ?x ?y ?z ?length ?dir)
+    )
+)
+
+(:method (build-row ?x ?y ?z ?length ?dir)
+    build-row-blockwise
+    ()
+    (
+        (build-row-blockwise ?x ?y ?z ?length ?dir)
+    )
+)
+
+
+;;directions are given as numbers with:
+;; eastequal1, westequal2, northequal3, southequal4
+(:method (build-row-blockwise ?x ?y ?z ?length ?dir)
         length-one
         ((call equal ?length 1))
         ((place-block stone ?x ?y ?z))
@@ -95,28 +149,62 @@
         ((call equal ?dir 1) (not (call equal ?length 1) ))
         ( 
             (place-block stone ?x ?y ?z)
-            (build-row (call + ?x 1) ?y ?z (call - ?length 1) ?dir)
+            (build-row-blockwise (call + ?x 1) ?y ?z (call - ?length 1) ?dir)
         )
 
         west
         ((call equal ?dir 2) (not (call equal ?length 1) ))
         ( 
             (place-block stone ?x ?y ?z)
-            (build-row (call - ?x 1) ?y ?z (call - ?length 1) ?dir)
+            (build-row-blockwise (call - ?x 1) ?y ?z (call - ?length 1) ?dir)
         )
 
         north
         ((call equal ?dir 3) (not (call equal ?length 1) ))
         ( 
             (place-block stone ?x ?y ?z)
-            (build-row ?x ?y (call - ?z 1) (call - ?length 1) ?dir)
+            (build-row-blockwise ?x ?y (call - ?z 1) (call - ?length 1) ?dir)
         )
 
         south
         ((call equal ?dir 4) (not (call equal ?length 1) ))
         ( 
             (place-block stone ?x ?y ?z)
-            (build-row ?x ?y (call + ?z 1) (call - ?length 1) ?dir)
+            (build-row-blockwise ?x ?y (call + ?z 1) (call - ?length 1) ?dir)
+        )
+)
+
+(:method (build-row-hidden ?x ?y ?z ?length ?dir)
+        length-one
+        ((call equal ?length 1))
+        ((place-block-hidden stone ?x ?y ?z))
+
+        east
+        ((call equal ?dir 1) (not (call equal ?length 1) ))
+        ( 
+            (place-block-hidden stone ?x ?y ?z)
+            (build-row-hidden (call + ?x 1) ?y ?z (call - ?length 1) ?dir)
+        )
+
+        west
+        ((call equal ?dir 2) (not (call equal ?length 1) ))
+        ( 
+            (place-block-hidden stone ?x ?y ?z)
+            (build-row-hidden (call - ?x 1) ?y ?z (call - ?length 1) ?dir)
+        )
+
+        north
+        ((call equal ?dir 3) (not (call equal ?length 1) ))
+        ( 
+            (place-block-hidden stone ?x ?y ?z)
+            (build-row-hidden ?x ?y (call - ?z 1) (call - ?length 1) ?dir)
+        )
+
+        south
+        ((call equal ?dir 4) (not (call equal ?length 1) ))
+        ( 
+            (place-block-hidden stone ?x ?y ?z)
+            (build-row-hidden ?x ?y (call + ?z 1) (call - ?length 1) ?dir)
         )
 )
 
@@ -237,10 +325,101 @@
             (!build-railing-finished ?x ?y ?z ?length ?dir))
 )
 
+(:method (build-railing ?x ?y ?z ?length ?dir)
+
+        east
+        ((call equal ?dir 1))
+        (
+            (build-railing-east ?x ?y ?z ?length ?dir))
+
+        west
+        ((call equal ?dir 2))
+        (
+            (build-railing-west ?x ?y ?z ?length ?dir))
+
+        north
+        ((call equal ?dir 3))
+        (
+            (build-railing-north ?x ?y ?z ?length ?dir))
+
+        south
+        ((call equal ?dir 4))
+        (
+            (build-railing-south ?x ?y ?z ?length ?dir))
+)
+
+
 (:method (build-railing ?x ?y ?z ?length  ?dir)
     ()
-    ((!build-railing ?x ?y ?z ?length ?dir))
+    ((!build-railing ?x ?y ?z ?length ?dir)
+      (build-railing-hidden ?x ?y ?z ?length ?dir)  )
 )
+
+(:method (build-railing-hidden ?x ?y ?z ?length ?dir)
+
+        east
+        ((call equal ?dir 1))
+        (
+            (build-railing-east-hidden ?x ?y ?z ?length ?dir))
+
+        west
+        ((call equal ?dir 2))
+        (
+            (build-railing-west-hidden ?x ?y ?z ?length ?dir))
+
+        north
+        ((call equal ?dir 3))
+        (
+            (build-railing-north-hidden ?x ?y ?z ?length ?dir))
+
+        south
+        ((call equal ?dir 4))
+        (
+            (build-railing-south-hidden ?x ?y ?z ?length ?dir))
+)
+
+
+(:method (build-railing-east-hidden ?x ?y ?z ?length ?dir)
+        east-one
+        ((call equal ?dir 1))
+        ( 
+            (place-block-hidden stone (call - (call + ?x ?length) 1) ?y ?z)
+            (place-block-hidden stone ?x ?y ?z)
+            (build-row-hidden ?x (call + ?y 1) ?z ?length ?dir)
+        )
+)
+
+(:method (build-railing-west-hidden ?x ?y ?z ?length ?dir)
+        west-one
+        ((call equal ?dir 2) )
+        ( 
+            (place-block-hidden stone (call + (call - ?x ?length) 1) ?y ?z)
+            (place-block-hidden stone ?x ?y ?z)
+            (build-row-hidden ?x (call + ?y 1) ?z ?length ?dir)
+        )
+)
+
+(:method (build-railing-north-hidden ?x ?y ?z ?length ?dir)
+        north-one
+        ((call equal ?dir 3))
+        (   
+            (place-block-hidden stone ?x ?y (call + (call - ?z ?length) 1))
+            (place-block-hidden stone ?x ?y ?z)
+            (build-row-hidden ?x (call + ?y 1) ?z ?length ?dir)
+        )
+)
+
+
+(:method (build-railing-south-hidden ?x ?y ?z ?length ?dir)
+        south-one
+        ((call equal ?dir 4))
+        ( 
+            (place-block-hidden stone ?x ?y (call - (call + ?z ?length) 1))
+            (place-block-hidden stone ?x ?y ?z)
+            (build-row-hidden ?x (call + ?y 1) ?z ?length ?dir)
+        )
+)
+
 
 (:method (build-floor-east ?x ?y ?z ?length ?width ?dir)
         width-one
@@ -383,10 +562,118 @@
 )
 
 (:method (build-floor ?x ?y ?z ?length ?width ?dir)
+        zero-height
+        ((call equal ?width 0))
+        ()
+
+        east
+        ((call equal ?dir 1))
+        (
+            (build-floor-east ?x ?y ?z ?length ?width ?dir))
+
+        west
+        ((call equal ?dir 2))
+        (
+            (build-floor-west ?x ?y ?z ?length ?width ?dir))
+
+        north
+        ((call equal ?dir 3))
+        (
+            (build-floor-north ?x ?y ?z ?length ?width ?dir))
+
+        south
+        ((call equal ?dir 4))
+        (
+            (build-floor-south ?x ?y ?z ?length ?width ?dir))
+)
+
+(:method (build-floor ?x ?y ?z ?length ?width ?dir)
     ()
-    ((!build-floor ?x ?y ?z ?length ?width ?dir))
+    ((!build-floor ?x ?y ?z ?length ?width ?dir)
+        (build-floor-hidden ?x ?y ?z ?length ?width ?dir))
 
     )
+
+(:method (build-floor-hidden ?x ?y ?z ?length ?width ?dir)
+        zero-height
+        ((call equal ?width 0))
+        ()
+
+        east
+        ((call equal ?dir 1))
+        (
+            (build-floor-east-hidden ?x ?y ?z ?length ?width ?dir))
+
+        west
+        ((call equal ?dir 2))
+        (
+            (build-floor-west-hidden ?x ?y ?z ?length ?width ?dir))
+
+        north
+        ((call equal ?dir 3))
+        (
+            (build-floor-north-hidden ?x ?y ?z ?length ?width ?dir))
+
+        south
+        ((call equal ?dir 4))
+        (
+            (build-floor-south-hidden ?x ?y ?z ?length ?width ?dir))
+)
+
+
+(:method (build-floor-east-hidden ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 1))
+        ((build-row-hidden ?x ?y ?z ?length 4))
+
+        east-one
+        ((call equal ?dir 1) (not (call equal ?width 1)))
+        ( 
+            (build-row-hidden ?x ?y ?z ?length 4)
+            (build-floor-east-hidden (call + ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+        )
+)
+
+(:method (build-floor-west-hidden ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 2))
+        ((build-row-hidden ?x ?y ?z ?length 4))
+
+        west-one
+        ((call equal ?dir 2) (not (call equal ?width 1)))
+        ( 
+            (build-row-hidden ?x ?y ?z ?length 4)
+            (build-floor-west-hidden (call - ?x 1) ?y ?z ?length (call - ?width 1) ?dir)
+        )
+)
+
+(:method (build-floor-north-hidden ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 3))
+        ((build-row-hidden ?x ?y ?z ?length 1))
+
+        north-one
+        ((call equal ?dir 3) (not (call equal ?width 1)))
+        ( 
+            (build-row-hidden ?x ?y ?z ?length 1)
+            (build-floor-north-hidden ?x ?y (call - ?z 1) ?length (call - ?width 1) ?dir)
+        )
+
+)
+
+(:method (build-floor-south-hidden ?x ?y ?z ?length ?width ?dir)
+        width-one
+        ((call equal ?width 1) (call equal ?dir 4))
+        ((build-row-hidden ?x ?y ?z ?length 1))
+
+        south-one
+        ((call equal ?dir 4) (not (call equal ?width 1)))
+        ( 
+            (build-row-hidden ?x ?y ?z ?length 1)
+            (build-floor-south-hidden ?x ?y (call + ?z 1) ?length (call - ?width 1) ?dir)
+        )
+)
+
 
 (:method (build-bridge ?x ?y ?z ?length ?width)
         ()

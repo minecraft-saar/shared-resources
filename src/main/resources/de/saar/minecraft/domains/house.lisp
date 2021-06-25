@@ -17,7 +17,7 @@
  (:operator (!place-block-hidden ?block-type ?x ?y ?z ?x2 ?y2 ?z2)
         ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
         ((clear ?x ?y ?z) (last-placed ?x2 ?y2 ?z2))
-        ((block-at ?block-type ?x ?y ?z) (last-placed ?x ?y ?z))
+        ((block-at ?block-type ?x ?y ?z) (last-placed 100 100 100))
         0
  )
 
@@ -367,6 +367,36 @@
 )
 
 (:method (build-wall ?x ?y ?z ?length ?height ?dir)
+        zero-height
+        ((call equal ?height 0))
+        ()
+
+        east
+        ((call equal ?dir 1))
+        (
+            (build-wall-east ?x ?y ?z ?length ?height ?dir)
+            )
+
+        west
+        ((call equal ?dir 2))
+        (
+            (build-wall-west ?x ?y ?z ?length ?height ?dir)
+            )
+
+        north
+        ((call equal ?dir 3))
+        (
+            (build-wall-north ?x ?y ?z ?length ?height ?dir)
+            )
+        south
+        ((call equal ?dir 4))
+        (
+            (build-wall-south ?x ?y ?z ?length ?height ?dir)
+            )
+
+)
+
+(:method (build-wall ?x ?y ?z ?length ?height ?dir)
         hidden
         ()
         ( (!build-wall ?x ?y ?z ?length ?height ?dir)
@@ -387,18 +417,18 @@
         )
 )
 
-(:method (build-wall-east-hidden ?x ?y ?z ?length ?height ?dir)
-        height-one
-        ((call equal ?height 1) (call equal ?dir 1))
-        ((build-row-hidden (call - (call + ?x ?length) 1) ?y ?z ?length 2))
+;;(:method (build-wall-east-hidden ?x ?y ?z ?length ?height ?dir)
+;;        height-one
+;;        ((call equal ?height 1) (call equal ?dir 1))
+;;        ((build-row-hidden (call - (call + ?x ?length) 1) ?y ?z ?length 2))
 
-        east-two
-        ((call equal ?dir 1) (not (call equal ?height 1)))
-        ( 
-            (build-row-hidden (call - (call + ?x ?length) 1) ?y ?z ?length 2)
-            (build-wall-east-hidden ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
-        )
-)
+;;        east-two
+;;        ((call equal ?dir 1) (not (call equal ?height 1)))
+;;        ( 
+;;            (build-row-hidden (call - (call + ?x ?length) 1) ?y ?z ?length 2)
+;;            (build-wall-east-hidden ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+;;        )
+;;)
 
 
 (:method (build-wall-west-hidden ?x ?y ?z ?length ?height ?dir)
@@ -414,18 +444,18 @@
         )
 )
 
-(:method (build-wall-west-hidden ?x ?y ?z ?length ?height ?dir)
-        height-one
-        ((call equal ?height 1) (call equal ?dir 2))
-        ((build-row-hidden (call + (call - ?x ?length) 1) ?y ?z ?length 1))
+;;(:method (build-wall-west-hidden ?x ?y ?z ?length ?height ?dir)
+;;        height-one
+;;        ((call equal ?height 1) (call equal ?dir 2))
+;;        ((build-row-hidden (call + (call - ?x ?length) 1) ?y ?z ?length 1))
 
-        west-two
-        ((call equal ?dir 2) (not (call equal ?height 1)))
-        ( 
-            (build-row-hidden (call + (call - ?x ?length) 1) ?y ?z ?length 1)
-            (build-wall-west-hidden ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
-        )
-)
+;;        west-two
+;;        ((call equal ?dir 2) (not (call equal ?height 1)))
+;;        ( 
+;;            (build-row-hidden (call + (call - ?x ?length) 1) ?y ?z ?length 1)
+;;            (build-wall-west-hidden ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+;;        )
+;;)
 
 (:method (build-wall-north-hidden ?x ?y ?z ?length ?height ?dir)
         height-one
@@ -440,18 +470,18 @@
         )
 )
 
-(:method (build-wall-north-hidden ?x ?y ?z ?length ?height ?dir)
-        height-one
-        ((call equal ?height 1) (call equal ?dir 3))
-        ((build-row-hidden ?x ?y (call + (call - ?z ?length) 1) ?length 4))
+;;(:method (build-wall-north-hidden ?x ?y ?z ?length ?height ?dir)
+;;        height-one
+;;        ((call equal ?height 1) (call equal ?dir 3))
+;;        ((build-row-hidden ?x ?y (call + (call - ?z ?length) 1) ?length 4))
 
-        north-two
-        ((call equal ?dir 3) (not (call equal ?height 1)))
-        ( 
-            (build-row-hidden ?x ?y (call + (call - ?z ?length) 1) ?length 4)
-            (build-wall-north-hidden ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
-        )
-)
+;;        north-two
+;;        ((call equal ?dir 3) (not (call equal ?height 1)))
+;;        ( 
+;;            (build-row-hidden ?x ?y (call + (call - ?z ?length) 1) ?length 4)
+;;            (build-wall-north-hidden ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+;;        )
+;;)
 
 (:method (build-wall-south-hidden ?x ?y ?z ?length ?height ?dir)
         height
@@ -467,18 +497,18 @@
 
 )
 
-(:method (build-wall-south-hidden ?x ?y ?z ?length ?height ?dir)
-        height-one
-        ((call equal ?height 1) (call equal ?dir 4))
-        ((build-row-hidden ?x ?y (call - (call + ?z ?length) 1) ?length 3))
+;;(:method (build-wall-south-hidden ?x ?y ?z ?length ?height ?dir)
+;;        height-one
+;;        ((call equal ?height 1) (call equal ?dir 4))
+;;        ((build-row-hidden ?x ?y (call - (call + ?z ?length) 1) ?length 3))
 
-        south-two
-        ((call equal ?dir 4) (not (call equal ?height 1)))
-        ( 
-            (build-row-hidden ?x ?y (call - (call + ?z ?length) 1) ?length 3)
-            (build-wall-south-hidden ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
-        )
-)
+;;        south-two
+;;        ((call equal ?dir 4) (not (call equal ?height 1)))
+;;        ( 
+;;            (build-row-hidden ?x ?y (call - (call + ?z ?length) 1) ?length 3)
+;;            (build-wall-south-hidden ?x (call + ?y 1) ?z ?length (call - ?height 1) ?dir)
+;;        )
+;;)
 
 
 (:method (build-wall-hidden ?x ?y ?z ?length ?height ?dir)
