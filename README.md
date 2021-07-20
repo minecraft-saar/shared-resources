@@ -48,21 +48,56 @@ Example:
 ## Create the .init file
 The problem files have a general form like this:
 ```
-(defproblem problem-<scenario1\> build-<scenario1\> ( 
+(defproblem problem-<scenario1> build-<scenario1> ( 
   (last-placed 100 100 100) ...
   ) 
  
-((build-<scenario1\> x ... z)) 
+((build-<scenario1> x ... z)) 
  )
 ```
 You have to paste the following part into the .init file:
 ```
-build-<scenario1\> x ... z
+build-<scenario1> x ... z
+```
 
+Example:
+- problem file:
+```
+(defproblem problem-bridge build-bridge ( 
+  (last-placed 100 100 100) (block-at BLUE_WOOL 6 66 6) (block-at YELLOW_WOOL 10 66 8)
+  ) 
+ 
+((build-bridge 6 66 6 5 3)) 
+ )
+```
+
+- .init file
+```
+build-bridge 6 66 6 5 3 
 ```
 
 # 2. Questionnaires
-**TODO**
+In the questionnaires there are questions that the player is asked after he succesfully finished the scenario.
+
+You can answer questions in different ways with:
+- a rating scale, f.ex. choosing a number between 1 and 5
+- free text
+
+### Format
+- Questions that have to be answered with a rating scale:
+```
+LIKERT: <Question/Sentence>
+```
+- Questions that you can answer with free text:
+```
+FREE: <Question/Sentence>
+```
+
+Example:
+```
+LIKERT:The system gave me useful feedback about my progress.
+FREE:Please add any comments or observations you had(free text).
+```
 
 # 3. Worlds
 This repository contains files of predefined structures for Minecraft worlds.
@@ -87,10 +122,14 @@ The Material is written as specified in the enum org.bukkit.Material from the sp
 
 For comments in the world file: If a line starts with a #, it is ignored.
 
-### Additional notes
+
+# Additional notes
 Bedrock blocks cannot be destroyed by the player.
 
 Leave the plan with y-coordinate 0 as bedrock layer so that players don't fall into the void.
 
-### List of structures with explanation
-**TODO**
+# List of structures with explanation
+- bridge: a bridge with a railing
+- house: a house with a flat roof
+- busstop: a busstop with 3 walls and a flat roof that juts out on the side without a wall
+- rectangle25: a rectangle of size 5x5 and height 1
