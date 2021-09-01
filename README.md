@@ -1,5 +1,3 @@
-**Work in progress, not finished yet**
-
 # Adding new scenarios
 To add a new scenario <scenario1\> you have to add the following files:
 
