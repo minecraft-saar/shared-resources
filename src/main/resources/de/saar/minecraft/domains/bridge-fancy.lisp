@@ -40,10 +40,17 @@
         0
  )
 
- (:operator (!build-railing ?x ?y ?z ?length ?dir)
-        ()
-        ()
-        ((railing-at ?x ?y ?z ?length ?dir))
+ (:operator (!remove-it-railing ?x ?y ?z)
+        ((it-railing ?x ?y ?z))
+        ((it-railing ?x ?y ?z))
+        ((it-railing 100 100 100))
+        10.0
+    )
+
+ (:operator (!build-railing ?x ?y ?z ?length ?dir ?x2 ?y2 ?z2)
+        ((it-railing ?x2 ?y2 ?z2))
+        ((it-railing ?x2 ?y2 ?z2))
+        ((railing-at ?x ?y ?z ?length ?dir) (it-railing ?x ?y ?z))
         10.0
 
     )
@@ -55,17 +62,17 @@
         0.0
     )
 
-(:operator (!build-railing-finished ?x ?y ?z ?length ?dir)
-        ()
-        ()
-        ((railing-at ?x ?y ?z ?length ?dir))
+(:operator (!build-railing-finished ?x ?y ?z ?length ?dir ?x2 ?y2 ?z2)
+        ((it-railing ?x2 ?y2 ?z2))
+        ((it-railing ?x2 ?y2 ?z2))
+        ((railing-at ?x ?y ?z ?length ?dir) (it-railing ?x ?y ?z))
         0.0
     )
 
-(:operator (!build-stairs ?x ?y ?z ?width ?depth ?height ?dir)
-        ()
-        ()
-        ((stairs-at ?x ?y ?z ?width ?depth ?height ?dir))
+(:operator (!build-stairs ?x ?y ?z ?width ?depth ?height ?dir ?x2 ?y2 ?z2)
+        ((it-staircase ?x2 ?y2 ?z2))
+        ((it-staircase ?x2 ?y2 ?z2))
+        ((stairs-at ?x ?y ?z ?width ?depth ?height ?dir)(it-staircase ?x ?y ?z))
         10.0
 
     )
@@ -77,11 +84,58 @@
         0.0
     )
 
-(:operator (!build-stairs-finished ?x ?y ?z ?width ?depth ?height ?dir)
-        ()
-        ()
-        ((stairs-at ?x ?y ?z ?width ?depth ?height ?dir))
+(:operator (!build-stairs-finished ?x ?y ?z ?width ?depth ?height ?dir ?x2 ?y2 ?z2)
+        ((it-staircase ?x2 ?y2 ?z2))
+        ((it-staircase ?x2 ?y2 ?z2))
+        ((stairs-at ?x ?y ?z ?width ?depth ?height ?dir) (it-staircase ?x ?y ?z))
         0.0
+    )
+
+(:operator (!remove-it-stairs ?x ?y ?z)
+        ((it-staircase ?x ?y ?z))
+        ((it-staircase ?x ?y ?z))
+        ((it-staircase 100 100 100))
+        10.0
+    )
+
+
+(:operator (!build-row ?x ?y ?z ?length ?dir ?x2 ?y2 ?z2)
+        ((it-row ?x2 ?y2 ?z2))
+        ((it-row ?x2 ?y2 ?z2))
+        ((row-at ?x ?y ?z ?length ?dir) (it-row ?x ?y ?z))
+        5.0
+    )
+
+(:operator (!remove-it-row ?x ?y ?z )
+        ((it-row ?x ?y ?z))
+        ((it-row ?x ?y ?z))
+        ((it-row 100 100 100))
+    )
+
+(:operator (!remove-it-wall ?x ?y ?z )
+        ((it-wall ?x ?y ?z))
+        ((it-wall ?x ?y ?z))
+        ((it-wall 100 100 100))
+    )
+(:operator (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
+        ()
+        ()
+        ()
+        0.0
+    )
+
+(:operator (!build-wall-finished ?x ?y ?z ?length ?height ?dir ?x2 ?y2 ?z2)
+        ((it-wall ?x2 ?y2 ?z2))
+        ((it-wall ?x2 ?y2 ?z2))
+        ((wall-at ?x ?y ?z ?length ?height ?dir)(it-wall ?x ?y ?z))
+        0.0
+    )
+
+(:operator (!build-wall ?x ?y ?z ?length ?height ?dir ?x2 ?y2 ?z2)
+        ((it-wall ?x2 ?y2 ?z2))
+        ((it-wall ?x2 ?y2 ?z2))
+        ((wall-at ?x ?y ?z ?length ?height ?dir) (it-wall ?x ?y ?z))
+        10.0
     )
 
 (:operator (!build-floor-starting ?x ?y ?z ?length ?width ?dir)
@@ -90,35 +144,6 @@
         ()
         0.0
     )
-
-(:operator (!build-row ?x ?y ?z ?length ?dir)
-        ()
-        ()
-        ((row-at ?x ?y ?z ?length ?dir))
-        5.0
-    )
-
-(:operator (!build-wall ?x ?y ?z ?length ?height ?dir)
-        ()
-        ()
-        ((wall-at ?x ?y ?z ?length ?height ?dir))
-        10.0
-    )
-
-(:operator (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
-        ()
-        ()
-        ()
-        0.0
-    )
-
-(:operator (!build-wall-finished ?x ?y ?z ?length ?height ?dir)
-        ()
-        ()
-        ((wall-at ?x ?y ?z ?length ?height ?dir))
-        0.0
-    )
-
 
 (:operator (!build-floor-finished ?x ?y ?z ?length ?width ?dir)
         ()
@@ -172,18 +197,19 @@
 
 (:method (build-row ?x ?y ?z ?length ?dir)
     build-directly
-    ((last-placed ?x2 ?y2 ?z2 ))
+    ((it-row ?x2 ?y2 ?z2))
     (
-        (!build-row ?x ?y ?z ?length ?dir)
+        (!build-row ?x ?y ?z ?length ?dir ?x2 ?y2 ?z2)
         (build-row-hidden ?x ?y ?z ?length ?dir)
     )
 )
 
 (:method (build-row ?x ?y ?z ?length ?dir)
     build-row-blockwise
-    ()
+    ((it-row ?x2 ?y2 ?z2))
     (
         (build-row-blockwise ?x ?y ?z ?length ?dir)
+        (!remove-it-row ?x2 ?y2 ?z2)
     )
 )
 
@@ -265,7 +291,7 @@
         ( 
             (place-block stone (call - (call + ?x ?length) 1) ?y ?z)
             (place-block stone ?x ?y ?z)
-            (build-row ?x (call + ?y 1) ?z ?length ?dir)
+            (build-row-blockwise ?x (call + ?y 1) ?z ?length ?dir)
         )
 )
 
@@ -275,7 +301,7 @@
         ( 
             (place-block stone ?x ?y ?z)
             (place-block stone (call - (call + ?x ?length) 1) ?y ?z)
-            (build-row (call - (call + ?x ?length) 1) (call + ?y 1) ?z ?length 2)
+            (build-row-blockwise (call - (call + ?x ?length) 1) (call + ?y 1) ?z ?length 2)
         )
 )
 
@@ -286,7 +312,7 @@
         ( 
             (place-block stone (call + (call - ?x ?length) 1) ?y ?z)
             (place-block stone ?x ?y ?z)
-            (build-row ?x (call + ?y 1) ?z ?length ?dir)
+            (build-row-blockwise ?x (call + ?y 1) ?z ?length ?dir)
         )
 )
 
@@ -296,7 +322,7 @@
         ( 
             (place-block stone ?x ?y ?z)
             (place-block stone (call + (call - ?x ?length) 1) ?y ?z)
-            (build-row (call + (call - ?x ?length) 1) (call + ?y 1) ?z ?length 1)
+            (build-row-blockwise (call + (call - ?x ?length) 1) (call + ?y 1) ?z ?length 1)
         )
 )
 
@@ -306,7 +332,7 @@
         (   
             (place-block stone ?x ?y (call + (call - ?z ?length) 1))
             (place-block stone ?x ?y ?z)
-            (build-row ?x (call + ?y 1) ?z ?length ?dir)
+            (build-row-blockwise ?x (call + ?y 1) ?z ?length ?dir)
         )
 )
 
@@ -316,7 +342,7 @@
         ( 
             (place-block stone ?x ?y ?z)
             (place-block stone ?x ?y (call + (call - ?z ?length) 1))
-            (build-row ?x (call + ?y 1) (call + (call - ?z ?length) 1) ?length 4)
+            (build-row-blockwise ?x (call + ?y 1) (call + (call - ?z ?length) 1) ?length 4)
         )
 )
 
@@ -326,7 +352,7 @@
         ( 
             (place-block stone ?x ?y (call - (call + ?z ?length) 1))
             (place-block stone ?x ?y ?z)
-            (build-row ?x (call + ?y 1) ?z ?length ?dir)
+            (build-row-blockwise ?x (call + ?y 1) ?z ?length ?dir)
         )
 )
 
@@ -336,7 +362,7 @@
         (   
             (place-block stone ?x ?y ?z)
             (place-block stone ?x ?y (call - (call + ?z ?length) 1))
-            (build-row ?x (call + ?y 1) (call - (call + ?z ?length) 1) ?length 3)
+            (build-row-blockwise ?x (call + ?y 1) (call - (call + ?z ?length) 1) ?length 3)
         )
 )
 
@@ -344,62 +370,70 @@
 (:method (build-railing ?x ?y ?z ?length ?dir)
 
         east
-        ((call equal ?dir 1))
+        ((call equal ?dir 1) (it-railing ?x2 ?y2 ?z2))
         (
             (!build-railing-starting ?x ?y ?z ?length ?dir)
             (build-railing-east ?x ?y ?z ?length ?dir)
-            (!build-railing-finished ?x ?y ?z ?length ?dir))
+            (!build-railing-finished ?x ?y ?z ?length ?dir ?x2 ?y2 ?z2))
 
         west
-        ((call equal ?dir 2))
+        ((call equal ?dir 2) (it-railing ?x2 ?y2 ?z2))
         (
             (!build-railing-starting ?x ?y ?z ?length ?dir)
             (build-railing-west ?x ?y ?z ?length ?dir)
-            (!build-railing-finished ?x ?y ?z ?length ?dir))
+            (!build-railing-finished ?x ?y ?z ?length ?dir ?x2 ?y2 ?z2))
 
         north
-        ((call equal ?dir 3))
+        ((call equal ?dir 3) (it-railing ?x2 ?y2 ?z2))
         (
             (!build-railing-starting ?x ?y ?z ?length ?dir)
             (build-railing-north ?x ?y ?z ?length ?dir)
-            (!build-railing-finished ?x ?y ?z ?length ?dir))
+            (!build-railing-finished ?x ?y ?z ?length ?dir ?x2 ?y2 ?z2))
 
         south
-        ((call equal ?dir 4))
+        ((call equal ?dir 4) (it-railing ?x2 ?y2 ?z2))
         (
             (!build-railing-starting ?x ?y ?z ?length ?dir)
             (build-railing-south ?x ?y ?z ?length ?dir)
-            (!build-railing-finished ?x ?y ?z ?length ?dir))
+            (!build-railing-finished ?x ?y ?z ?length ?dir ?x2 ?y2 ?z2))
 )
 
 (:method (build-railing ?x ?y ?z ?length ?dir)
 
         east
-        ((call equal ?dir 1))
+        ((call equal ?dir 1)(it-railing ?x2 ?y2 ?z2))
         (
-            (build-railing-east ?x ?y ?z ?length ?dir))
+            (build-railing-east ?x ?y ?z ?length ?dir)
+            (!remove-it-railing ?x2 ?y2 ?z2)
+            )
 
         west
-        ((call equal ?dir 2))
+        ((call equal ?dir 2)(it-railing ?x2 ?y2 ?z2))
         (
-            (build-railing-west ?x ?y ?z ?length ?dir))
+            (build-railing-west ?x ?y ?z ?length ?dir)
+            (!remove-it-railing ?x2 ?y2 ?z2)
+            )
 
         north
-        ((call equal ?dir 3))
+        ((call equal ?dir 3)(it-railing ?x2 ?y2 ?z2))
         (
-            (build-railing-north ?x ?y ?z ?length ?dir))
+            (build-railing-north ?x ?y ?z ?length ?dir)
+            (!remove-it-railing ?x2 ?y2 ?z2)
+            )
 
         south
-        ((call equal ?dir 4))
+        ((call equal ?dir 4)(it-railing ?x2 ?y2 ?z2))
         (
-            (build-railing-south ?x ?y ?z ?length ?dir))
+            (build-railing-south ?x ?y ?z ?length ?dir)
+            (!remove-it-railing ?x2 ?y2 ?z2)
+            )
 )
 
 
 (:method (build-railing ?x ?y ?z ?length  ?dir)
-    ()
-    ((!build-railing ?x ?y ?z ?length ?dir)
-      (build-railing-hidden ?x ?y ?z ?length ?dir)  )
+    ((it-railing ?x2 ?y2 ?z2))
+    ((!build-railing ?x ?y ?z ?length ?dir ?x2 ?y2 ?z2)
+      (build-railing-hidden ?x ?y ?z ?length ?dir))
 )
 
 (:method (build-railing-hidden ?x ?y ?z ?length ?dir)
@@ -471,23 +505,24 @@
 
 (:method (build-stairs ?x ?y ?z ?width ?depth ?height ?dir)
     stairs-directly
-    ()
-    ((!build-stairs ?x ?y ?z ?width ?depth ?height ?dir))
+    ((it-staircase ?x2 ?y2 ?z2))
+    ((!build-stairs ?x ?y ?z ?width ?depth ?height ?dir ?x2 ?y2 ?z2))
 )
 
 (:method (build-stairs ?x ?y ?z ?width ?depth ?height ?dir)
     stairs-teaching
-    ()
+    ((it-staircase ?x2 ?y2 ?z2))
     (   (!build-stairs-starting ?x ?y ?z ?width ?depth ?height ?dir)
         (build-stairs-wall ?x ?y ?z ?width ?depth 1 ?height ?dir)
-        (!build-stairs-finished ?x ?y ?z ?width ?depth ?height ?dir)
+        (!build-stairs-finished ?x ?y ?z ?width ?depth ?height ?dir ?x2 ?y2 ?z2)
     )
 )
 
 (:method (build-stairs ?x ?y ?z ?width ?depth ?height ?dir)
     stairs-wall
-    ()
-    ((build-stairs-wall ?x ?y ?z ?width ?depth 1 ?height ?dir))
+    ((it-staircase ?x2 ?y2 ?z2))
+    ((build-stairs-wall ?x ?y ?z ?width ?depth 1 ?height ?dir)
+    (!remove-it-stairs ?x2 ?y2 ?z2))
 )
 
 ;;(:method (build-stairs ?x ?y ?z ?width ?depth ?height ?dir)
@@ -574,8 +609,8 @@
 
 (:method (build-wall ?x ?y ?z ?length ?height ?dir)
         hidden
-        ()
-        ( (!build-wall ?x ?y ?z ?length ?height ?dir)
+        ((it-wall ?x2 ?y2 ?z2))
+        ( (!build-wall ?x ?y ?z ?length ?height ?dir ?x2 ?y2 ?z2)
           (build-wall-hidden ?x ?y ?z ?length ?height ?dir)
         )
 )
@@ -586,26 +621,30 @@
         ()
 
         east
-        ((call equal ?dir 1))
+        ((call equal ?dir 1) (it-wall ?x2 ?y2 ?z2))
         (
             (build-wall-east ?x ?y ?z ?length ?height ?dir)
+            (!remove-it-wall ?x2 ?y2 ?z2)
             )
 
         west
-        ((call equal ?dir 2))
+        ((call equal ?dir 2) (it-wall ?x2 ?y2 ?z2))
         (
             (build-wall-west ?x ?y ?z ?length ?height ?dir)
+            (!remove-it-wall ?x2 ?y2 ?z2)
             )
 
         north
-        ((call equal ?dir 3))
+        ((call equal ?dir 3) (it-wall ?x2 ?y2 ?z2))
         (
             (build-wall-north ?x ?y ?z ?length ?height ?dir)
+            (!remove-it-wall ?x2 ?y2 ?z2)
             )
         south
-        ((call equal ?dir 4))
+        ((call equal ?dir 4) (it-wall ?x2 ?y2 ?z2))
         (
             (build-wall-south ?x ?y ?z ?length ?height ?dir)
+            (!remove-it-wall ?x2 ?y2 ?z2)
             )
 
 )
@@ -616,32 +655,32 @@
         ()
 
         east
-        ((call equal ?dir 1))
+        ((call equal ?dir 1) (it-wall ?x2 ?y2 ?z2))
         (
             (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
             (build-wall-east ?x ?y ?z ?length ?height ?dir)
-            (!build-wall-finished ?x ?y ?z ?length ?height ?dir))
+            (!build-wall-finished ?x ?y ?z ?length ?height ?dir ?x2 ?y2 ?z2))
 
         west
-        ((call equal ?dir 2))
+        ((call equal ?dir 2) (it-wall ?x2 ?y2 ?z2))
         (
             (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
             (build-wall-west ?x ?y ?z ?length ?height ?dir)
-            (!build-wall-finished ?x ?y ?z ?length ?height ?dir))
+            (!build-wall-finished ?x ?y ?z ?length ?height ?dir ?x2 ?y2 ?z2))
 
         north
-        ((call equal ?dir 3))
+        ((call equal ?dir 3) (it-wall ?x2 ?y2 ?z2))
         (
             (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
             (build-wall-north ?x ?y ?z ?length ?height ?dir)
-            (!build-wall-finished ?x ?y ?z ?length ?height ?dir))
+            (!build-wall-finished ?x ?y ?z ?length ?height ?dir ?x2 ?y2 ?z2))
 
         south
-        ((call equal ?dir 4))
+        ((call equal ?dir 4) (it-wall ?x2 ?y2 ?z2))
         (
             (!build-wall-starting ?x ?y ?z ?length ?height ?dir)
             (build-wall-south ?x ?y ?z ?length ?height ?dir)
-            (!build-wall-finished ?x ?y ?z ?length ?height ?dir))
+            (!build-wall-finished ?x ?y ?z ?length ?height ?dir ?x2 ?y2 ?z2))
 
 )
 
